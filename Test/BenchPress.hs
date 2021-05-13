@@ -49,6 +49,7 @@
 module Test.BenchPress
     ( -- * Running a benchmark
       benchmark,
+      benchmarkWith,
       bench,
       benchMany,
 
