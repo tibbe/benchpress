@@ -89,6 +89,8 @@ benchmark iters setup teardown action = do
   pure (s1, s2)
 
 -- | Like 'benchmark', but also returns the first result of the series.
+--
+-- -- @since 0.2.3
 benchmarkWith :: Int -> IO a -> (a -> IO b) -> (a -> IO c) -> IO (c, Stats, Stats)
 benchmarkWith iters setup teardown action =
   if iters < 1
