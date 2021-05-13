@@ -79,12 +79,22 @@ import Text.Printf (printf)
 -- @teardown@ is run even if @action@ raises an exception.  Returns
 -- statistics for both the measured CPU times and wall clock times, in
 -- that order.
-benchmark :: Int -> IO a -> (a -> IO b) -> (a -> IO c) -> IO (Stats, Stats)
-benchmark iters setup teardown action =
+benchmark :: Int -- ^ Number of iterations
+          -> IO a -- ^ Setup action
+          -> (a -> IO b) -- ^ Teardown/cleanup action
+          -> (a -> IO c) -- ^ Action to be benchmarked
+          -> IO (Stats, Stats)
+benchmark iters setup teardown action = do
+  (_, s1, s2) <- benchmarkWith iters setup teardown action
+  pure (s1, s2)
+
+-- | Like 'benchmark', but also returns the first result of the series.
+benchmarkWith :: Int -> IO a -> (a -> IO b) -> (a -> IO c) -> IO (c, Stats, Stats)
+benchmarkWith iters setup teardown action =
   if iters < 1
     then error "benchmark: iters must be greater than 0"
     else do
-      (cpuTimes, wallTimes) <- unzip `fmap` go iters
+      (vals, cpuTimes, wallTimes) <- unzip3 `fmap` go iters
       let xs        = sort cpuTimes
           cpuStats  = Stats
                       { min         = head xs
@@ -103,17 +113,19 @@ benchmark iters setup teardown action =
                       , max         = last ys
                       , percentiles = percentiles' ys
                       }
-      return (cpuStats, wallStats)
+          v = head vals
+      return (v, cpuStats, wallStats)
       where
         go 0 = return []
         go n = do
           elapsed <- bracket setup teardown $ \a -> do
             startWall <- getCurrentTime
             startCpu <- getCPUTime
-            _ <- action a
+            x <- action a
             endCpu <- getCPUTime
             endWall <- getCurrentTime
-            return (picosToMillis $! endCpu - startCpu
+            return (x
+                   ,picosToMillis $! endCpu - startCpu
                    ,secsToMillis $! endWall `diffUTCTime` startWall)
           timings <- go $! n - 1
           return $ elapsed : timings

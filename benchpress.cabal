@@ -1,5 +1,5 @@
 name:           benchpress
-version:        0.2.2.16
+version:        0.2.3
 synopsis:       Micro-benchmarking with detailed statistics.
 Description:    Benchmarks actions and produces statistics
                 such as min, mean, median, standard deviation,
@@ -14,6 +14,7 @@ build-type:     Simple
 cabal-version:  >= 1.10
 category:       Testing
 homepage:       https://github.com/WillSewell/benchpress
+extra-source-files:  Changelog.md
 
 library
   exposed-modules:  Test.BenchPress
